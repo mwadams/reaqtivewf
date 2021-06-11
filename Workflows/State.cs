@@ -1,4 +1,8 @@
-﻿namespace Corvus.Workflows
+﻿// <copyright file="State.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Workflows
 {
     using System;
     using System.Collections.Generic;
@@ -12,17 +16,17 @@
     /// </summary>
     /// <remarks>
     /// <para>
-    /// When a <see cref="Trigger" is applied to a state, its <see cref="ExitConditions" /> are
-    /// tested to determine if it can leave the state at all. The engine then looks through the ordered set of 
-    /// <see cref="Transitions" /> for the state, until it finds the first one whose conditions permit it to be executed. 
+    /// When a <see cref="Trigger" /> is applied to a state, its <see cref="ExitConditions" /> are
+    /// tested to determine if it can leave the state at all. The engine then looks through the ordered set of
+    /// <see cref="Transitions" /> for the state, until it finds the first one whose conditions permit it to be executed.
     /// </para>
     /// <para>
     /// When a state change occurs, a composite <see cref="Command" /> is created from the <see cref="ExitActions" /> of the
     /// state that is being left, the <see cref="Transition.Actions" /> and then the <see cref="EntryActions" /> of the <see cref="State" />
     /// corresponding to the <see cref="Transition.TargetStateId" />.
     /// </para>
-    /// <remarks>
-    public class State : IEquatable<State?>
+    /// </remarks>
+    public class State
     {
         private readonly ImmutableDictionary<string, Transition> transitions;
         private readonly ImmutableArray<Func<WorkflowSubjectVersion, Trigger, bool>> exitConditions;
@@ -32,11 +36,16 @@
         private readonly Func<WorkflowSubjectVersion, Trigger, IEnumerable<string>> interests;
 
         /// <summary>
-        /// Creates an instance of a <see cref="State"/>.
+        /// Initializes a new instance of the <see cref="State"/> class.
         /// </summary>
         /// <param name="id">The ID of the state.</param>
         /// <param name="name">The name of the state.</param>
         /// <param name="transitions">The transitions from the state.</param>
+        /// <param name="entryConditions">The entry conditions for the state.</param>
+        /// <param name="exitConditions">The exit conditions for the state.</param>
+        /// <param name="entryActions">The entry actions for the state.</param>
+        /// <param name="exitActions">The exit actions for the state.</param>
+        /// <param name="interests">The interests of the state.</param>
         public State(string id, string name, IEnumerable<Transition> transitions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> entryConditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> exitConditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> entryActions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> exitActions, Func<WorkflowSubjectVersion, Trigger, IEnumerable<string>> interests)
         {
             this.Id = id;
@@ -50,14 +59,14 @@
         }
 
         /// <summary>
-        /// Gets the globally unique ID of the state
+        /// Gets the globally unique ID of the state.
         /// </summary>
         public string Id { get; init; }
 
         /// <summary>
         /// Gets the human-readable name of the state.
         /// </summary>
-        /// <remarks>This does not have to be unique, but it is usually helpful if it is!</remarks>
+        /// <remarks>This does not have to be unique, but it is usually helpful if it is!.</remarks>
         public string Name { get; init; }
 
         /// <summary>
@@ -69,7 +78,6 @@
         /// Gets the exit conditions for the state.
         /// </summary>
         public IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> ExitConditions => this.exitConditions;
-
 
         /// <summary>
         /// Gets the entry actions for the state.
@@ -97,52 +105,26 @@
         /// </summary>
         public IEnumerable<Transition> Transitions => this.transitions.Values;
 
-        public override bool Equals(object? obj)
-        {
-            return Equals(obj as State);
-        }
-
-        public bool Equals(State? other)
-        {
-            return other != null &&
-                   Id == other.Id;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Id);
-        }
-
-        public static bool operator ==(State? left, State? right)
-        {
-            return EqualityComparer<State>.Default.Equals(left, right);
-        }
-
-        public static bool operator !=(State? left, State? right)
-        {
-            return !(left == right);
-        }
-
         /// <summary>
         /// Try to find the transition that applies to this subject version and trigger.
         /// </summary>
         /// <param name="workflow">The workflow of which this is a state.</param>
         /// <param name="subjectVersion">The current subject version.</param>
         /// <param name="trigger">The trigger to be applied.</param>
-        /// <param name="transition">The resulting transition, or null if no applicable transition is found.</param>
-        /// <returns>A tuple of the <see cref="Transition" that has been found and the <see cref="State" /> referenced by its <see cref="Transition.TargetStateId" />.</returns>
+        /// <param name="transitionAndTargetState">A tuple of the <see cref="Transition"/> that has been found and the <see cref="State" /> referenced by its <see cref="Transition.TargetStateId" />.</param>
+        /// <returns><see langword="true"/> if a transition is found.</returns>
         /// <remarks>
         /// <para>
-        /// When a <see cref="Trigger" is applied, our <see cref="ExitConditions" /> are
-        /// tested to determine if we can leave the state at all. We then look through the ordered set of 
-        /// <see cref="Transitions" /> until we find the first one whose <see cref="Transition.TestConditions(Workflow, WorkflowSubjectVersion, Trigger, out State?)" /> permits it to be made. 
-        ///  </para>
+        /// When a <see cref="Trigger" /> is applied, our <see cref="ExitConditions" /> are
+        /// tested to determine if we can leave the state at all. We then look through the ordered set of
+        /// <see cref="Transitions" /> until we find the first one whose <see cref="Transition.TestConditions(Workflow, WorkflowSubjectVersion, Trigger, out State?)" /> permits it to be made.
+        /// </para>
         /// </remarks>
-        public bool TryFindTransitionAndTargetState(Workflow workflow, WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)]out (Transition, State)? transitionAndTargetState)
+        public bool TryFindTransitionAndTargetState(Workflow workflow, WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)] out (Transition, State)? transitionAndTargetState)
         {
             if (this.TestExitConditions(subjectVersion, trigger))
             {
-                foreach (var candidate in this.Transitions)
+                foreach (Transition candidate in this.Transitions)
                 {
                     if (candidate.TestConditions(workflow, subjectVersion, trigger, out State? targetState))
                     {
@@ -156,6 +138,12 @@
             return false;
         }
 
+        /// <summary>
+        /// Tests the entry conditions of the state for the subject version and trigger.
+        /// </summary>
+        /// <param name="subjectVersion">The current <see cref="WorkflowSubjectVersion"/>.</param>
+        /// <param name="trigger">The trigger to apply.</param>
+        /// <returns><see langword="true"/> if all the conditions pass.</returns>
         internal bool TestEntryConditions(WorkflowSubjectVersion subjectVersion, Trigger trigger)
         {
             return this.entryConditions.All(condition => condition(subjectVersion, trigger));

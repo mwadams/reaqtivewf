@@ -1,16 +1,23 @@
-﻿namespace Corvus.Commands
+﻿// <copyright file="Command.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Commands
 {
     using System;
 
+    /// <summary>
+    /// An instruction to execute a command.
+    /// </summary>
     public class Command
     {
         /// <summary>
         /// Creates an instance of the command with the given id, sequence number, commandType and payload.
         /// </summary>
-        /// <param name="sourceId"></param>
-        /// <param name="id"></param>
-        /// <param name="commandType"></param>
-        /// <param name="payload"></param>
+        /// <param name="sourceId">The ID of the source of the command.</param>
+        /// <param name="id">The id of the command.</param>
+        /// <param name="commandType">The type of the command.</param>
+        /// <param name="payload">The payload of the command.</param>
         public Command(string sourceId, string id, Uri commandType, object payload)
         {
             this.SourceId = sourceId;
@@ -25,12 +32,12 @@
         public string SourceId { get; init; }
 
         /// <summary>
-        /// The unique ID of the command.
+        /// Gets the unique ID of the command.
         /// </summary>
         public string Id { get; init; }
 
-
-        /// Gets the type of the command
+        /// <summary>
+        /// Gets the type of the command.
         /// </summary>
         public Uri CommandType { get; init; }
 

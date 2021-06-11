@@ -1,4 +1,8 @@
-﻿namespace Corvus.Workflows
+﻿// <copyright file="Transition.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Workflows
 {
     using System;
     using System.Collections.Generic;
@@ -12,11 +16,11 @@
     /// </summary>
     /// <remarks>
     /// The transition is directed from a source state to a <See cref="TargetStateId" />. The transition
-    /// can only be made if all its <see cref="Conditions" /> evaluate to true,  and the
-    /// <see cref="State.EntyConditions" /> for the state with <see cref="TargetStateId" /> also evaluate to true.
+    /// can only be made if <see cref="Transition.TestConditions(Workflow, WorkflowSubjectVersion, Trigger, out State?)" /> evaluates to true, and the
+    /// <see cref="State.EntryConditions" /> for the state with <see cref="TargetStateId" /> also evaluate to true.
     /// When the transition takes place, it provides <see cref="Actions" /> which contribute to the composite <see cref="Command" />
     /// which is scheduled for  execution by the workflow engine.
-    /// <remarks>
+    /// </remarks>
     public class Transition
     {
         private readonly ImmutableArray<Func<WorkflowSubjectVersion, Trigger, bool>> conditions;
@@ -26,7 +30,9 @@
         /// Creates an instance of a <see cref="Transition"/>.
         /// </summary>
         /// <param name="id">The id of the transition.</param>
+        /// <param name="targetStateId">The ID of the target state.</param>
         /// <param name="conditions">The conditions for the transition.</param>
+        /// <param name="actions">The actions for the transition.</param>
         public Transition(string id, string targetStateId, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> conditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> actions)
         {
             this.Id = id;
@@ -36,7 +42,7 @@
         }
 
         /// <summary>
-        /// Gets the ID of the transition
+        /// Gets the ID of the transition.
         /// </summary>
         public string Id { get; init; }
 
@@ -56,8 +62,8 @@
         /// <param name="workflow">The workflow in which this is a transition.</param>
         /// <param name="subjectVersion">The current workflow subject version.</param>
         /// <param name="trigger">The trigger to be applied.</param>
-        /// <param name="targetState">The target state of the transition, if the conditions passed. Otherwise null.</param>
-        /// <returns></returns>
+        /// <param name="targetState">The target state of the transition, if the conditions evaluated to true. Otherwise null.</param>
+        /// <returns><see langword="true"/> if the conditions evaluated to true.</returns>
         internal bool TestConditions(Workflow workflow, WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)] out State? targetState)
         {
             if (this.conditions.All(condition => condition(subjectVersion, trigger)))
