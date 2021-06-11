@@ -13,17 +13,18 @@
     /// <remarks>
     /// <para>
     /// A workflow subject is associated with a single workflow for its whole lifecycle. A new version
-    /// of a <see cref="Workflow" /> is a new worfklow, and to make use of it a workflow subject should
+    /// of a <see cref="Workflow" /> is a new workflow, and to make use of it a workflow subject should
     // be migrated to a new workflow subject in the new workflow.
     /// </para>
     /// <para>
-    /// A workflow engine will apply an incoming <see cref="Trigger" /> to a <see cref="WorfklowSubjectVersion" />.
+    /// A workflow engine will apply an incoming <see cref="Trigger" /> to a <see cref="WorkflowSubjectVersion" /> if its
+    /// <see cref="WorkflowSubjectVersion.Status" > is <see cref="WorkflowSubjectStatus.WaitingForTrigger" /> .
     /// </para>
     /// <para>
-    /// The  engine will match the <see cref="Trigger.Topics" />
+    /// The the engine will match the <see cref="Trigger.Topics" />
     /// with the <see cref="WorkflowSubjectVersion.Interests" />. If there is any
     /// intersection between those two lists, then the trigger is a candidate to be
-    /// applied to the <see cref="WorkflwoSubjectVersion"/>.
+    /// applied to the <see cref="WorkflowSubjectVersion"/>.
     /// </para>
     /// <para>
     /// The source state is the <see cref="State" /> in the workflow's set of <see cref="States"/> 

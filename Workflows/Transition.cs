@@ -15,7 +15,7 @@
     /// can only be made if all its <see cref="Conditions" /> evaluate to true,  and the
     /// <see cref="State.EntyConditions" /> for the state with <see cref="TargetStateId" /> also evaluate to true.
     /// When the transition takes place, it provides <see cref="Actions" /> which contribute to the composite <see cref="Command" />
-    /// which is scheduled for  execution by the workflow engine.
+    /// which is produced by <see cref="Workflow.TryExecuteTransition(TriggerAndSubjectVersion, out (WorkflowSubjectVersion, Commands.Command)?)" />.
     /// <remarks>
     public class Transition
     {
@@ -38,6 +38,9 @@
         /// <summary>
         /// Gets the ID of the transition
         /// </summary>
+        /// <remarks>
+        /// While this ID need only be unique to the worklfow, it is typically globally unique for better logging. 
+        /// </remarks>
         public string Id { get; init; }
 
         /// <summary>
@@ -57,7 +60,7 @@
         /// <param name="subjectVersion">The current workflow subject version.</param>
         /// <param name="trigger">The trigger to be applied.</param>
         /// <param name="targetState">The target state of the transition, if the conditions passed. Otherwise null.</param>
-        /// <returns></returns>
+        /// <returns><see langword="true" /> if the conditions pass.</returns>
         internal bool TestConditions(Workflow workflow, WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)] out State? targetState)
         {
             if (this.conditions.All(condition => condition(subjectVersion, trigger)))

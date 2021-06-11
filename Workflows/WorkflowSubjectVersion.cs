@@ -11,6 +11,15 @@
     /// </remarks>
     public class WorkflowSubjectVersion
     {
+        /// <summary>
+        /// Creates an instance of a <see cref="WorkflowSubjectVersion" />
+        /// </summary>
+        /// <param name="id">The id of the subject</param>
+        /// <param name="sequenceNumber">The monotonically increasing sequence number of this version.</param>
+        /// <param name="stateId">The <see cref="State.Id"/> of the current state of this workflow subject.</param>
+        /// <param name="interests">The current interests of this workflow subject, which are mateched to the <see cref="Trigger.Topics"/> to determine if a trigger applies to this subject version.</param>
+        /// <param name="status">The current status of this workflow subject, in the engine lifecycle. It is used to manage the subject through the asynchronous phases of transitions, and to fault the subject.</param>
+        /// <param name="triggerSequenceNumber">The sequence numnber of the last trigger to cause a state change for this subject.</param>
         public WorkflowSubjectVersion(string id, long sequenceNumber, string stateId, IEnumerable<string> interests, WorkflowSubjectStatus status, long triggerSequenceNumber)
         {
             this.Id = id;
