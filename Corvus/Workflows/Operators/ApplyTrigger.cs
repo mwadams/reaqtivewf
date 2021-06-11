@@ -12,8 +12,8 @@ namespace Corvus.Workflows.Operators
     using Reaqtive;
 
     /// <summary>
-    /// An operator that projects a <see cref="TriggerAndSubjectVersion"/> source into an <see cref="IObservable{T}"/> of <see cref="Command"/> and
-    /// a new <see cref="WorkflowSubjectVersion"/>, by using a <see cref="Workflow"/>.
+    /// An operator that projects a <see cref="TriggerAndSubjectVersion"/> source into an <see cref="IObservable{Command}"/> and
+    /// a new <see cref="WorkflowSubjectVersion"/>, according to the state machine defined in a <see cref="Workflow"/>.
     /// </summary>
     internal sealed class ApplyTrigger : SubscribableBase<WorkflowSubjectVersion>
     {
@@ -30,6 +30,7 @@ namespace Corvus.Workflows.Operators
         public ApplyTrigger(ISubscribable<TriggerAndSubjectVersion> source, IObserver<Command> commandSink, Workflow workflow)
         {
             Debug.Assert(source != null, $"The {nameof(source)} must not be null.");
+            Debug.Assert(commandSink != null, $"The {nameof(commandSink)} must not be null.");
             Debug.Assert(workflow != null, $"The {nameof(workflow)} must not be null.");
 
             this.source = source;
