@@ -33,10 +33,12 @@ namespace Corvus.Workflows
         /// <param name="targetStateId">The ID of the target state.</param>
         /// <param name="conditions">The conditions for the transition.</param>
         /// <param name="actions">The actions for the transition.</param>
-        public Transition(string id, string targetStateId, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> conditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> actions)
+        /// <param name="contextFactory">A function that creates the new <see cref="WorkflowSubjectVersion.Context"/> from the existing context and the <see cref="Trigger"/>.</param>
+        public Transition(string id, string targetStateId, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> conditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> actions, Func<object, Trigger, object> contextFactory)
         {
             this.Id = id;
             this.TargetStateId = targetStateId;
+            this.ContextFactory = contextFactory;
             this.conditions = conditions.ToImmutableArray();
             this.actions = actions.ToImmutableArray();
         }
@@ -50,6 +52,11 @@ namespace Corvus.Workflows
         /// Gets the ID of the target state for this transition.
         /// </summary>
         public string TargetStateId { get; init; }
+
+        /// <summary>
+        /// Gets a function that tcreates the new <see cref="WorkflowSubjectVersion.Context"/> from the existing context and the <see cref="Trigger"/>.
+        /// </summary>
+        public Func<WorkflowSubjectVersion, Trigger, object> ContextFactory { get; private set; }
 
         /// <summary>
         /// Gets the actions for this transition.

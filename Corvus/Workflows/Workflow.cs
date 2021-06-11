@@ -140,7 +140,7 @@ namespace Corvus.Workflows
                 if (startState.TryFindTransitionAndTargetState(this, subjectVersion, trigger, out (Transition transition, State targetState)? transitionAndTargetState))
                 {
                     result = (
-                        this.CreateWorkflowSubjectVersion(subjectVersion, trigger, transitionAndTargetState.Value.targetState),
+                        this.CreateWorkflowSubjectVersion(subjectVersion, trigger, transitionAndTargetState.Value.transition, transitionAndTargetState.Value.targetState),
                         this.CreateCommand(subjectVersion, trigger, startState, transitionAndTargetState.Value.transition, transitionAndTargetState.Value.targetState));
                     return true;
                 }
@@ -162,10 +162,10 @@ namespace Corvus.Workflows
                     endState.EntryActions.Select(a => a(subjectVersion, trigger))));
         }
 
-        private WorkflowSubjectVersion CreateWorkflowSubjectVersion(WorkflowSubjectVersion subjectVersion, Trigger trigger, State targetState)
+        private WorkflowSubjectVersion CreateWorkflowSubjectVersion(WorkflowSubjectVersion subjectVersion, Trigger trigger, Transition transition, State targetState)
         {
             // TODO: Figure out the best strategy for a monotonically increasing sequence number - this is probably fine :-).
-            return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTransitionCommandAcks, trigger.SequenceNumber);
+            return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTransitionCommandAcks, trigger.SequenceNumber, transition.ContextFactory(subjectVersion, trigger));
         }
     }
 }

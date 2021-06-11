@@ -29,7 +29,8 @@ namespace Corvus.Workflows
         /// <param name="interests">The interests of the workflow subject at this version.</param>
         /// <param name="status">The <see cref="WorkflowSubjectStatus"/> of the workflow subject at this version.</param>
         /// <param name="triggerSequenceNumber">The sequence number of the <see cref="Trigger"/> that last caused the last update to the <see cref="StateId"/> in this workflow subject version.</param>
-        public WorkflowSubjectVersion(string id, long sequenceNumber, string stateId, IEnumerable<string> interests, WorkflowSubjectStatus status, long triggerSequenceNumber)
+        /// <param name="context">Context information for the workflow subject version.</param>
+        public WorkflowSubjectVersion(string id, long sequenceNumber, string stateId, IEnumerable<string> interests, WorkflowSubjectStatus status, long triggerSequenceNumber, object context)
         {
             this.Id = id;
             this.SequenceNumber = sequenceNumber;
@@ -37,6 +38,7 @@ namespace Corvus.Workflows
             this.Interests = interests.ToImmutableList();
             this.Status = status;
             this.TriggerSequenceNumber = triggerSequenceNumber;
+            this.Context = context;
         }
 
         /// <summary>
@@ -72,5 +74,10 @@ namespace Corvus.Workflows
         /// changes of the engine (e.g. waiting for trigger [tseq:1, seq: 1] -> {Trigger [tseq:2]} -> waiting for acks [tseq:2, seq: 2]-> {Acks arrive} -> waiting for trigger [tseq: 2, seq: 3]).
         /// </remarks>
         public long TriggerSequenceNumber { get; init; }
+
+        /// <summary>
+        /// Gets the custom context metadata for this version.
+        /// </summary>
+        public object Context { get; init;  }
     }
 }

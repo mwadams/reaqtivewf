@@ -25,10 +25,12 @@ namespace Corvus.Workflows
         /// <param name="id">The ID of the trigger.</param>
         /// <param name="sequenceNumber">The sequence number of the trigger.</param>
         /// <param name="topics">The topics of the trigger.</param>
-        public Trigger(string id, long sequenceNumber, IEnumerable<string> topics)
+        /// <param name="payload">An arbitrary payload for the trigger.</param>
+        public Trigger(string id, long sequenceNumber, IEnumerable<string> topics, object payload)
         {
             this.Id = id;
             this.SequenceNumber = sequenceNumber;
+            this.Payload = payload;
             this.Topics = topics.ToImmutableArray();
         }
 
@@ -41,6 +43,11 @@ namespace Corvus.Workflows
         /// Gets the monotonically increasing sequence number of this trigger.
         /// </summary>
         public long SequenceNumber { get; init; }
+
+        /// <summary>
+        /// Gets the payload for the trigger.
+        /// </summary>
+        public object Payload { get; init;  }
 
         /// <summary>
         /// Gets the topics of this trigger.
