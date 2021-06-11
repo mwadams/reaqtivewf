@@ -12,7 +12,7 @@ namespace Corvus.Workflows.Operators
     /// <summary>
     /// Extension methods for triggers and subjects.
     /// </summary>
-    internal static class TriggersAndSubjects
+    internal static class ApplyTriggerExtensions
     {
         /// <summary>
         /// Subscribe to a given <see cref="ISubscribable{WorkflowSubjectVersion}"/> source, while the <see cref="WorkflowSubjectVersion.Status"/> is <see cref="WorkflowSubjectStatus.WaitingForTrigger"/>,
