@@ -26,7 +26,7 @@ namespace Corvus.Workflows
     /// corresponding to the <see cref="Transition.TargetStateId" />.
     /// </para>
     /// </remarks>
-    public class State
+    public sealed class State
     {
         private readonly ImmutableDictionary<string, Transition> transitions;
         private readonly ImmutableArray<Func<WorkflowSubjectVersion, Trigger, bool>> exitConditions;

@@ -16,7 +16,7 @@ namespace Corvus.Workflows
         /// <summary>
         /// Version 0.9 of operator state.
         /// </summary>
-        public static readonly Version V0_9 = new Version(0, 9, 0, 0);
+        public static readonly Version V0_9 = new (0, 9, 0, 0);
 
 #pragma warning restore SA1310 // Field names should not contain underscore
     }

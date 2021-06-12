@@ -16,7 +16,7 @@ namespace Corvus.Commands
         /// <summary>
         /// The command type of the composite command.
         /// </summary>
-        public static readonly Uri CompositeCommmandType = new Uri("corvus:commands/compositecommand");
+        public static readonly Uri CompositeCommmandType = new ("corvus:commands/compositecommand");
 
         /// <summary>
         /// Creates a composite command.

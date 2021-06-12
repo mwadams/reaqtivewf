@@ -21,7 +21,7 @@ namespace Corvus.Workflows
     /// When the transition takes place, it provides <see cref="Actions" /> which contribute to the composite <see cref="Command" />
     /// which is scheduled for  execution by the workflow engine.
     /// </remarks>
-    public class Transition
+    public sealed class Transition
     {
         private readonly ImmutableArray<Func<WorkflowSubjectVersion, Trigger, bool>> conditions;
         private readonly ImmutableArray<Func<WorkflowSubjectVersion, Trigger, Command>> actions;

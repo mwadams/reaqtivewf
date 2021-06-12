@@ -71,15 +71,17 @@ namespace Corvus.Workflows.Operators
             {
                 try
                 {
-                    if (this.Params.workflow.TryApplyTrigger(value.SubjectVersion, value.Trigger, out (WorkflowSubjectVersion workflowSubjectVersion, Command command)? result))
+                    if (this.Params.workflow.TryApplyTrigger(value.SubjectVersion, value.Trigger, out (WorkflowSubjectVersion WorkflowSubjectVersion, Command? Command)? result))
                     {
                         // TODO: Log the start of the transition
-
-                        // If this throws an exception, we will not have excecuted any command, or updated the workflow status.
-                        this.Params.commandSink.OnNext(result.Value.command);
+                        if (result.Value.Command is Command command)
+                        {
+                            // If this throws an exception, we will not have excecuted any command, or updated the workflow status.
+                            this.Params.commandSink.OnNext(command);
+                        }
 
                         // If this throws an exception, the commands for the transition may still be executed, but we will now be in an OnError situation
-                        this.Output.OnNext(result.Value.workflowSubjectVersion);
+                        this.Output.OnNext(result.Value.WorkflowSubjectVersion);
 
                         // TODO: Log the fact that we have completed the transition.
                     }

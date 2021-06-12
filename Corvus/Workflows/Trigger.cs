@@ -17,7 +17,7 @@ namespace Corvus.Workflows
     /// intersection between those two lists, then the trigger is a candidate to be
     /// applied to the workflow subject.
     /// </remarks>
-    public class Trigger
+    public sealed class Trigger
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Trigger"/> class.

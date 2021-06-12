@@ -7,6 +7,7 @@ namespace Corvus.Workflows
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using Corvus.Commands;
@@ -63,9 +64,23 @@ namespace Corvus.Workflows
     /// the <see cref="Transition.Actions" /> and <see cref="State.EntryActions" /> of the target state, in that order.
     /// </para>
     /// <para>
-    /// The newly produced <see cref="WorkflowSubjectVersion" /> will have the status <see cref="WorkflowSubjectStatus.WaitingForTransitionCommandAcks" /> and it is the job of the engine
-    /// to ensure that the command is queued, and those acks are asynchronously recieved (or a timeout occurs) and a new <see cref="WorkflowSubjectVersion" /> is produced in either the
-    /// <see cref="WorkflowSubjectStatus.WaitingForTrigger" /> or <see cref="WorkflowSubjectStatus.Faulted" /> states as appropriate.
+    /// The newly produced <see cref="WorkflowSubjectVersion" /> will have the status <see cref="WorkflowSubjectStatus.WaitingForTransitionCommandAcks" />. Its <see cref="WorkflowSubjectVersion.Context"/>
+    /// will be a <see cref="CommandContext"/> whose <see cref="CommandContext.Context"/> is built from the <see cref="Transition.ContextFactory"/> and whose <see cref="CommandContext.CommandId"/> is the
+    /// <see cref="Command.Id"/> of the composite command executed as a result of the transition.
+    /// </para>
+    /// <para>
+    /// The engine will then listen for an acknowledgement of that command, and call <see cref="ApplyCommandAck(WorkflowSubjectVersion, Commands.CommandAck)"/>. This produces a new
+    /// <see cref="WorkflowSubjectVersion"/> with the status <see cref="WorkflowSubjectStatus.WaitingForTrigger"/> if the command was accepted, and <see cref="WorkflowSubjectStatus.Faulted"/> if the command
+    /// was not accepted.
+    /// </para>
+    /// <para>
+    /// If the subject was faulted, the <see cref="WorkflowSubjectVersion.Context"/> will be the <see cref="CommandContext"/> to allow you to identify the command as part of your recovery process. Otherwise
+    /// the context will be unwrapped and set to <see cref="CommandContext.Context"/>.
+    /// </para>
+    /// <para>
+    /// Note that the command will not necessarily have been executed at this point. It has merely been accepted for execution. If it is important to wait
+    /// for the command to run to completion, you should model this in the workflow and raise triggers from the command handler to which the workflow can respond, for
+    /// either success or failure.
     /// </para>
     /// <code>
     /// [<![CDATA[
@@ -87,7 +102,7 @@ namespace Corvus.Workflows
     /// ]]>
     /// </code>
     /// </remarks>
-    public class Workflow
+    public sealed class Workflow
     {
         private readonly ImmutableDictionary<string, State> states;
 
@@ -113,6 +128,29 @@ namespace Corvus.Workflows
         public IEnumerable<State> States => this.states.Values;
 
         /// <summary>
+        /// Applies a <see cref="CommandAck"/> to a <see cref="WorkflowSubjectVersion"/>.
+        /// </summary>
+        /// <param name="subjectVersion">The current <see cref="WorkflowSubjectVersion"/>.</param>
+        /// <param name="ack">The <see cref="CommandAck"/> to apply.</param>
+        /// <returns>A new <see cref="WorkflowSubjectVersion"/> with <see cref="WorkflowSubjectStatus.WaitingForTrigger"/> if the <see cref="CommandAck.State"/> was <see cref="CommandState.Accepted"/>,
+        /// and <see cref="WorkflowSubjectStatus.Faulted"/> if the <see cref="CommandAck.State"/> was <see cref="CommandState.Rejected"/>.</returns>
+        public static WorkflowSubjectVersion ApplyCommandAck(WorkflowSubjectVersion subjectVersion, CommandAck ack)
+        {
+            Debug.Assert(subjectVersion.Status == WorkflowSubjectStatus.WaitingForTransitionCommandAcks, $"The {nameof(subjectVersion)} must be WaitingForTransitionCommandAcks.");
+            if (ack.State == CommandState.Accepted)
+            {
+                var commandContext = subjectVersion.Context as CommandContext;
+                Debug.Assert(commandContext != null, $"The {nameof(subjectVersion.Context)} must be a {nameof(CommandContext)}");
+
+                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, subjectVersion.StateId, subjectVersion.Interests, WorkflowSubjectStatus.WaitingForTrigger, subjectVersion.TriggerSequenceNumber, commandContext.Context);
+            }
+            else
+            {
+                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, subjectVersion.StateId, subjectVersion.Interests, WorkflowSubjectStatus.Faulted, subjectVersion.TriggerSequenceNumber, subjectVersion.Context);
+            }
+        }
+
+        /// <summary>
         /// Try to get a state with the given state ID.
         /// </summary>
         /// <param name="stateId">The ID of the state.</param>
@@ -131,17 +169,30 @@ namespace Corvus.Workflows
         /// <param name="result">The resulting workflow subject version, and the command to execute.</param>
         /// <returns><see langword="true" /> if a suitable transition was found, otherwise <see langword="false"/>.</returns>
         /// <remarks>
+        /// <para>
         /// The <see cref="Command"/> produced is a <see cref="CompositeCommand"/> which contains the <see cref="State.ExitActions"/> of the source state, the <see cref="Transition.Actions"/> and the <see cref="State.EntryActions"/> of the target state.
+        /// </para>
+        /// <para>
+        /// If there were any commands produced in the composite command, then the context produced is an instance of a <see cref="CommandContext"/> which wraps the context produced by the <see cref="Transition.ContextFactory"/>, and associates the ID of the <see cref="Command"/> it created.
+        /// The workflow version will have the <see cref="WorkflowSubjectVersion.Status"/> <see cref="WorkflowSubjectStatus.WaitingForTransitionCommandAcks"/>.
+        /// </para>
+        /// <para>
+        /// If there were no commands in the composite command, then it is not queued, and the context produced is just the context produced by the <see cref="Transition.ContextFactory"/>.
+        /// The workflow version will have the <see cref="WorkflowSubjectVersion.Status"/> <see cref="WorkflowSubjectStatus.WaitingForTransitionCommandAcks"/>.
+        /// </para>
         /// </remarks>
-        public bool TryApplyTrigger(WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)] out (WorkflowSubjectVersion, Command)? result)
+        public bool TryApplyTrigger(WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)] out (WorkflowSubjectVersion, Command?)? result)
         {
+            Debug.Assert(subjectVersion.Status == WorkflowSubjectStatus.WaitingForTrigger, $"The {nameof(subjectVersion)} must be WaitingForTrigger.");
+
             if (this.TryGetState(subjectVersion.StateId, out State? startState))
             {
-                if (startState.TryFindTransitionAndTargetState(this, subjectVersion, trigger, out (Transition transition, State targetState)? transitionAndTargetState))
+                if (startState.TryFindTransitionAndTargetState(this, subjectVersion, trigger, out (Transition Transition, State TargetState)? transitionAndTargetState))
                 {
+                    Command? command = CreateCommand(subjectVersion, trigger, startState, transitionAndTargetState.Value.Transition, transitionAndTargetState.Value.TargetState);
                     result = (
-                        this.CreateWorkflowSubjectVersion(subjectVersion, trigger, transitionAndTargetState.Value.transition, transitionAndTargetState.Value.targetState),
-                        this.CreateCommand(subjectVersion, trigger, startState, transitionAndTargetState.Value.transition, transitionAndTargetState.Value.targetState));
+                        CreateWorkflowSubjectVersion(subjectVersion, trigger, transitionAndTargetState.Value.Transition, transitionAndTargetState.Value.TargetState, command),
+                        command);
                     return true;
                 }
             }
@@ -150,22 +201,34 @@ namespace Corvus.Workflows
             return false;
         }
 
-        private Command CreateCommand(WorkflowSubjectVersion subjectVersion, Trigger trigger, State startState, Transition transition, State endState)
+        private static Command? CreateCommand(WorkflowSubjectVersion subjectVersion, Trigger trigger, State startState, Transition transition, State endState)
         {
+            Command[] commands = startState.ExitActions.Select(a => a(subjectVersion, trigger))
+                            .Concat(
+                                transition.Actions.Select(a => a(subjectVersion, trigger)))
+                            .Concat(
+                                endState.EntryActions.Select(a => a(subjectVersion, trigger))).ToArray();
+
+            if (commands.Length == 0)
+            {
+                return null;
+            }
+
             return CompositeCommand.Create(
                 subjectVersion.Id,
                 Guid.NewGuid().ToString(),
-                startState.ExitActions.Select(a => a(subjectVersion, trigger))
-                .Concat(
-                    transition.Actions.Select(a => a(subjectVersion, trigger)))
-                .Concat(
-                    endState.EntryActions.Select(a => a(subjectVersion, trigger))));
+                commands);
         }
 
-        private WorkflowSubjectVersion CreateWorkflowSubjectVersion(WorkflowSubjectVersion subjectVersion, Trigger trigger, Transition transition, State targetState)
+        private static WorkflowSubjectVersion CreateWorkflowSubjectVersion(WorkflowSubjectVersion subjectVersion, Trigger trigger, Transition transition, State targetState, Command? command)
         {
-            // TODO: Figure out the best strategy for a monotonically increasing sequence number - this is probably fine :-).
-            return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTransitionCommandAcks, trigger.SequenceNumber, transition.ContextFactory(subjectVersion, trigger));
+            if (command is Command c)
+            {
+                // TODO: Figure out the best strategy for a monotonically increasing sequence number - this is probably fine :-).
+                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTransitionCommandAcks, trigger.SequenceNumber, new CommandContext(c.Id, transition.ContextFactory(subjectVersion, trigger)));
+            }
+
+            return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTrigger, trigger.SequenceNumber, transition.ContextFactory(subjectVersion, trigger));
         }
     }
 }

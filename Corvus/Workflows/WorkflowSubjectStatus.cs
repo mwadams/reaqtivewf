@@ -18,7 +18,8 @@ namespace Corvus.Workflows
     /// the command and commits that new version. It does not apply any further triggers until it receieves an
     /// acknowledgement that the command has been accepted. When it gets that ack, it emits a new <see cref="WorkflowSubjectVersion"/>
     /// with the status <see cref="WaitingForTrigger"/>. If, on the other hand, it times out, or receives a "command not accepted" event,
-    /// it will generate a new <see cref="WorkflowSubjectVersion"/> instance with the status <see cref="Faulted"/>.
+    /// it will generate a new <see cref="WorkflowSubjectVersion"/> instance with the status <see cref="Faulted"/>. See <see cref="Workflow"/>
+    /// for more information on this lifecylce.
     /// </para>
     /// <code>
     /// [<![CDATA[

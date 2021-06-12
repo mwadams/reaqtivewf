@@ -18,7 +18,7 @@ namespace Corvus.Workflows
     /// The current state of a particular workflow subject is recorded as a <see cref="WorkflowSubjectVersion"/>.
     /// </para>
     /// </remarks>
-    public class WorkflowSubjectVersion
+    public sealed class WorkflowSubjectVersion
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WorkflowSubjectVersion"/> class.
