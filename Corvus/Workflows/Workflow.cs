@@ -28,7 +28,7 @@ namespace Corvus.Workflows
     /// must be created associated with the new workflow, and the subject that was associted with the old workflow should be terminated.
     /// </para>
     /// <para>
-    /// In order to transition a workflow subejct through its lifecycle, <see cref="Trigger"/>s are raised in the system.
+    /// In order to transition a workflow subject through its lifecycle, <see cref="Trigger"/>s are raised in the system.
     /// A <see cref="Trigger"/> is not associated with any particular workflow but represents something that has happened in the
     /// system.
     /// </para>
@@ -37,14 +37,18 @@ namespace Corvus.Workflows
     /// the <see cref="Trigger"/> to the current <see cref="WorkflowSubjectVersion"/> of each subject, regardless of the associated <see cref="Workflow"/>.
     /// </para>
     /// <para>
-    /// First, the  engine will match the <see cref="Trigger.Topics" />
-    /// with the <see cref="WorkflowSubjectVersion.Interests" />. If there is any
-    /// intersection between those two lists, then the trigger is a candidate to be
-    /// applied to the <see cref="WorkflowSubjectVersion"/>.
-    /// </para>
-    /// <para>
     /// We say that the "source state" is the <see cref="State" /> in the <see cref="Workflow.States"/>
     /// that is referenced by the <see cref="WorkflowSubjectVersion.StateId" />.
+    /// </para>
+    /// <para>
+    /// First, the  engine will match the <see cref="Trigger.Type"/> to the <see cref="WorkflowSubjectVersion.TriggerTypes"/> to see if it should respond
+    /// to this trigger. This list is determined by looking at the <see cref="Transition.TriggerType"/> for each <see cref="State.Transitions"/> for the
+    /// source state. This is intended to be a very fast check, and is typically implemented as a lookup in a hash table.
+    /// </para>
+    /// <para>
+    /// If the trigger has a matching type, then we match the <see cref="Trigger.Topics" />
+    /// with the <see cref="WorkflowSubjectVersion.Interests" />. If there is any intersection between those two lists, then the trigger is a candidate to be
+    /// applied to the <see cref="WorkflowSubjectVersion"/>.
     /// </para>
     /// <para>
     /// The engine will use <see cref="Workflow.TryApplyTrigger" /> which will look at the source state and determine if all its <see cref="State.ExitConditions" /> evaluate to true.
@@ -142,11 +146,11 @@ namespace Corvus.Workflows
                 var commandContext = subjectVersion.Context as CommandContext;
                 Debug.Assert(commandContext != null, $"The {nameof(subjectVersion.Context)} must be a {nameof(CommandContext)}");
 
-                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, subjectVersion.StateId, subjectVersion.Interests, WorkflowSubjectStatus.WaitingForTrigger, subjectVersion.TriggerSequenceNumber, commandContext.Context);
+                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, subjectVersion.StateId, subjectVersion.TriggerTypes, subjectVersion.Interests, WorkflowSubjectStatus.WaitingForTrigger, subjectVersion.TriggerSequenceNumber, commandContext.Context);
             }
             else
             {
-                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, subjectVersion.StateId, subjectVersion.Interests, WorkflowSubjectStatus.Faulted, subjectVersion.TriggerSequenceNumber, subjectVersion.Context);
+                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, subjectVersion.StateId, subjectVersion.TriggerTypes, subjectVersion.Interests, WorkflowSubjectStatus.Faulted, subjectVersion.TriggerSequenceNumber, subjectVersion.Context);
             }
         }
 
@@ -225,10 +229,10 @@ namespace Corvus.Workflows
             if (command is Command c)
             {
                 // TODO: Figure out the best strategy for a monotonically increasing sequence number - this is probably fine :-).
-                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTransitionCommandAcks, trigger.SequenceNumber, new CommandContext(c.Id, transition.ContextFactory(subjectVersion, trigger)));
+                return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.TriggerTypes, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTransitionCommandAcks, trigger.SequenceNumber, new CommandContext(c.Id, transition.ContextFactory(subjectVersion, trigger)));
             }
 
-            return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTrigger, trigger.SequenceNumber, transition.ContextFactory(subjectVersion, trigger));
+            return new WorkflowSubjectVersion(subjectVersion.Id, DateTime.Now.Ticks, targetState.Id, targetState.TriggerTypes, targetState.Interests(subjectVersion, trigger), WorkflowSubjectStatus.WaitingForTrigger, trigger.SequenceNumber, transition.ContextFactory(subjectVersion, trigger));
         }
     }
 }

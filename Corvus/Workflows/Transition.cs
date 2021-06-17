@@ -31,13 +31,15 @@ namespace Corvus.Workflows
         /// </summary>
         /// <param name="id">The id of the transition.</param>
         /// <param name="targetStateId">The ID of the target state.</param>
+        /// <param name="triggerType">The type of the trigger to match.</param>
         /// <param name="conditions">The conditions for the transition.</param>
         /// <param name="actions">The actions for the transition.</param>
         /// <param name="contextFactory">A function that creates the new <see cref="WorkflowSubjectVersion.Context"/> from the existing context and the <see cref="Trigger"/>.</param>
-        public Transition(string id, string targetStateId, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> conditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> actions, Func<object, Trigger, object> contextFactory)
+        public Transition(string id, string targetStateId, Uri triggerType, IEnumerable<Func<WorkflowSubjectVersion, Trigger, bool>> conditions, IEnumerable<Func<WorkflowSubjectVersion, Trigger, Command>> actions, Func<object, Trigger, object> contextFactory)
         {
             this.Id = id;
             this.TargetStateId = targetStateId;
+            this.TriggerType = triggerType;
             this.ContextFactory = contextFactory;
             this.conditions = conditions.ToImmutableArray();
             this.actions = actions.ToImmutableArray();
@@ -52,6 +54,11 @@ namespace Corvus.Workflows
         /// Gets the ID of the target state for this transition.
         /// </summary>
         public string TargetStateId { get; init; }
+
+        /// <summary>
+        /// Gets the type of the trigger required by this transition.
+        /// </summary>
+        public Uri TriggerType { get; }
 
         /// <summary>
         /// Gets a function that tcreates the new <see cref="WorkflowSubjectVersion.Context"/> from the existing context and the <see cref="Trigger"/>.
@@ -73,7 +80,7 @@ namespace Corvus.Workflows
         /// <returns><see langword="true"/> if the conditions evaluated to true.</returns>
         internal bool TestConditions(Workflow workflow, WorkflowSubjectVersion subjectVersion, Trigger trigger, [NotNullWhen(true)] out State? targetState)
         {
-            if (this.conditions.All(condition => condition(subjectVersion, trigger)))
+            if (trigger.Type == this.TriggerType && this.conditions.All(condition => condition(subjectVersion, trigger)))
             {
                 if (workflow.TryGetState(this.TargetStateId, out State? ts))
                 {

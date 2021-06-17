@@ -4,8 +4,8 @@
 
 namespace Corvus.Workflows
 {
+    using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
 
     /// <summary>
     /// A version of a workflow subject.
@@ -20,22 +20,27 @@ namespace Corvus.Workflows
     /// </remarks>
     public sealed class WorkflowSubjectVersion
     {
+        private readonly HashSet<Uri> triggerTypes;
+        private readonly HashSet<string> interests;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="WorkflowSubjectVersion"/> class.
         /// </summary>
         /// <param name="id">The id of the workflow subject.</param>
         /// <param name="sequenceNumber">The monotonically increasing sequence number of the workflow subject version.</param>
         /// <param name="stateId">The state ID of the state of the workflow subject at this version.</param>
+        /// <param name="triggerTypes">The trigger types to which this workflow subject version can respond.</param>
         /// <param name="interests">The interests of the workflow subject at this version.</param>
         /// <param name="status">The <see cref="WorkflowSubjectStatus"/> of the workflow subject at this version.</param>
         /// <param name="triggerSequenceNumber">The sequence number of the <see cref="Trigger"/> that last caused the last update to the <see cref="StateId"/> in this workflow subject version.</param>
         /// <param name="context">Context information for the workflow subject version.</param>
-        public WorkflowSubjectVersion(string id, long sequenceNumber, string stateId, IEnumerable<string> interests, WorkflowSubjectStatus status, long triggerSequenceNumber, object context)
+        public WorkflowSubjectVersion(string id, long sequenceNumber, string stateId, IEnumerable<Uri> triggerTypes, IEnumerable<string> interests, WorkflowSubjectStatus status, long triggerSequenceNumber, object context)
         {
             this.Id = id;
             this.SequenceNumber = sequenceNumber;
             this.StateId = stateId;
-            this.Interests = interests.ToImmutableList();
+            this.interests = new HashSet<string>(interests);
+            this.triggerTypes = new HashSet<Uri>(triggerTypes);
             this.Status = status;
             this.TriggerSequenceNumber = triggerSequenceNumber;
             this.Context = context;
@@ -50,11 +55,6 @@ namespace Corvus.Workflows
         /// Gets the state ID of the state of the workflow subject at this version.
         /// </summary>
         public string StateId { get; init; }
-
-        /// <summary>
-        /// Gets the interests of the workflow subject at this version.
-        /// </summary>
-        public IEnumerable<string> Interests { get; init; }
 
         /// <summary>
         /// Gets the <see cref="WorkflowSubjectStatus"/> of the workflow subject at this version.
@@ -79,5 +79,35 @@ namespace Corvus.Workflows
         /// Gets the custom context metadata for this version.
         /// </summary>
         public object Context { get; init;  }
+
+        /// <summary>
+        /// Gets the interests of the workflow subject at this version.
+        /// </summary>
+        internal IEnumerable<string> Interests => this.interests;
+
+        /// <summary>
+        /// Gets the trigger types to which the workflow subject will respond at this version.
+        /// </summary>
+        internal IEnumerable<Uri> TriggerTypes => this.triggerTypes;
+
+        /// <summary>
+        /// Gets a value indicating whether this version matches the given trigger type.
+        /// </summary>
+        /// <param name="triggerType">The trigger type to match.</param>
+        /// <returns><see langword="true"/> if the subject version contains the given trigger type.</returns>
+        public bool MatchesTriggerType(Uri triggerType)
+        {
+            return this.triggerTypes.Contains(triggerType);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this version has an interest matching the given topic.
+        /// </summary>
+        /// <param name="topic">The topic to match.</param>
+        /// <returns><see langword="true"/> if the subject version has an interest for the given topic.</returns>
+        public bool MatchesTopic(string topic)
+        {
+            return this.interests.Contains(topic);
+        }
     }
 }

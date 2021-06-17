@@ -56,6 +56,7 @@ namespace Corvus.Workflows
             this.exitConditions = exitConditions.ToImmutableArray();
             this.entryActions = entryActions.ToImmutableArray();
             this.exitActions = exitActions.ToImmutableArray();
+            this.TriggerTypes = this.transitions.Values.Select(s => s.TriggerType).ToImmutableHashSet();
         }
 
         /// <summary>
@@ -104,6 +105,11 @@ namespace Corvus.Workflows
         /// Gets the transitions from this state.
         /// </summary>
         public IEnumerable<Transition> Transitions => this.transitions.Values;
+
+        /// <summary>
+        /// Gets the trigger types to which this state will respond.
+        /// </summary>
+        public ImmutableHashSet<Uri> TriggerTypes { get; init; }
 
         /// <summary>
         /// Try to find the transition that applies to this subject version and trigger.

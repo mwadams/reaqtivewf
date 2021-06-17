@@ -41,7 +41,7 @@ namespace Corvus.Workflows.Operators
         {
             return triggers
                 .TakeUntil(workflowSubject)
-                .Where(trigger => trigger.Topics.Any(topic => subjectVersion.Interests.Contains(topic)))
+                .Where(trigger => subjectVersion.MatchesTriggerType(trigger.Type) && trigger.Topics.Any(topic => subjectVersion.MatchesTopic(topic)))
                 .Select(t => new TriggerAndSubjectVersion(t, subjectVersion));
         }
     }
