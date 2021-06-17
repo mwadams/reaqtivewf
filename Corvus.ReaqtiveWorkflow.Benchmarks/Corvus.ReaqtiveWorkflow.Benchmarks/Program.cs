@@ -4,7 +4,6 @@
 
 namespace Corvus.ReaqtiveWorkflow.Benchmarks
 {
-    using System;
     using BenchmarkDotNet.Running;
 
     /// <summary>
