@@ -6,6 +6,7 @@ namespace Corvus.Workflows
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// A version of a workflow subject.
@@ -91,11 +92,21 @@ namespace Corvus.Workflows
         internal IEnumerable<Uri> TriggerTypes => this.triggerTypes;
 
         /// <summary>
+        /// Determines if the trigger applies this instance.
+        /// </summary>
+        /// <param name="trigger">The trigger to test.</param>
+        /// <returns><see langword="true"/> if the trigger applies to the topic.</returns>
+        public bool ShouldApply(Trigger trigger)
+        {
+            return this.MatchesTriggerType(trigger.Type) && trigger.Topics.Any(topic => this.MatchesTopic(topic));
+        }
+
+        /// <summary>
         /// Gets a value indicating whether this version matches the given trigger type.
         /// </summary>
         /// <param name="triggerType">The trigger type to match.</param>
         /// <returns><see langword="true"/> if the subject version contains the given trigger type.</returns>
-        public bool MatchesTriggerType(Uri triggerType)
+        private bool MatchesTriggerType(Uri triggerType)
         {
             return this.triggerTypes.Contains(triggerType);
         }
@@ -105,7 +116,7 @@ namespace Corvus.Workflows
         /// </summary>
         /// <param name="topic">The topic to match.</param>
         /// <returns><see langword="true"/> if the subject version has an interest for the given topic.</returns>
-        public bool MatchesTopic(string topic)
+        private bool MatchesTopic(string topic)
         {
             return this.interests.Contains(topic);
         }

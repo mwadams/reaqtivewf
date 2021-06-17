@@ -16,8 +16,8 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
     /// </summary>
     public class WorkflowEngineBenchmarks
     {
-        private static readonly Uri WellKnownTriggerType = new Uri("corvus:workflow/triggers/match");
-        private static readonly Uri WellKnownNonMatchTriggerType = new Uri("corvus:workflow/triggers/nonmatch");
+        private static readonly Uri WellKnownTriggerType = new ("corvus:workflow/triggers/match");
+        private static readonly Uri WellKnownNonMatchTriggerType = new ("corvus:workflow/triggers/nonmatch");
 
         private readonly Workflow workflow;
         private readonly WorkflowSubjectVersion workflowSubjectVersion;
@@ -45,7 +45,7 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
         [Benchmark]
         public bool ApplyTriggerNotmatchingType()
         {
-            return this.workflowSubjectVersion.MatchesTriggerType(this.nonMatchingTrigger.Type) && this.nonMatchingTrigger.Topics.Any(topic => this.workflowSubjectVersion.MatchesTopic(topic));
+            return this.workflowSubjectVersion.ShouldApply(this.nonMatchingTrigger);
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
         [Benchmark]
         public bool ApplyTriggerMatchingTypeAndTopics()
         {
-            return this.workflowSubjectVersion.MatchesTriggerType(this.matchingTrigger.Type) && this.matchingTrigger.Topics.Any(topic => this.workflowSubjectVersion.MatchesTopic(topic));
+            return this.workflowSubjectVersion.ShouldApply(this.matchingTrigger);
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
         [Benchmark]
         public bool ApplyTriggerMatchingTypeButNotTopics()
         {
-            return this.workflowSubjectVersion.MatchesTriggerType(this.matchingTypeButNotTopicsTrigger.Type) && this.matchingTypeButNotTopicsTrigger.Topics.Any(topic => this.workflowSubjectVersion.MatchesTopic(topic));
+            return this.workflowSubjectVersion.ShouldApply(this.matchingTypeButNotTopicsTrigger);
         }
 
         private static WorkflowSubjectVersion BuildWorkflowSubjectVersion(Workflow workflow, string startStateId)
