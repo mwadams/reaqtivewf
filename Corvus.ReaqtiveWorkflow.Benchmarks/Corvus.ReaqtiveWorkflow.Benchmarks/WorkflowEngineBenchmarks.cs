@@ -22,6 +22,7 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
         private readonly Workflow workflow;
         private readonly WorkflowSubjectVersion workflowSubjectVersion;
         private readonly Trigger matchingTrigger;
+        private readonly Trigger matchingTypeButNotTopicsTrigger;
         private readonly Trigger nonMatchingTrigger;
 
         /// <summary>
@@ -32,8 +33,9 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
             string startStateId = Guid.NewGuid().ToString();
             this.workflow = new Workflow(Guid.NewGuid().ToString(), BuildStates(startStateId));
             this.workflowSubjectVersion = BuildWorkflowSubjectVersion(this.workflow, startStateId);
-            this.matchingTrigger = new (Guid.NewGuid().ToString(), 2, WellKnownTriggerType, Enumerable.Empty<string>(), new ());
-            this.nonMatchingTrigger = new (Guid.NewGuid().ToString(), 2, WellKnownNonMatchTriggerType, Enumerable.Empty<string>(), new ());
+            this.matchingTrigger = new (Guid.NewGuid().ToString(), 2, WellKnownTriggerType, new[] { "Hello", "There", "Everyone" }, new ());
+            this.matchingTypeButNotTopicsTrigger = new (Guid.NewGuid().ToString(), 2, WellKnownTriggerType, new[] { "Fi", "Fi", "Fo", "Fum" }, new ());
+            this.nonMatchingTrigger = new (Guid.NewGuid().ToString(), 2, WellKnownNonMatchTriggerType, new[] { "Fi", "Fi", "Fo", "Fum" }, new ());
         }
 
         /// <summary>
@@ -56,6 +58,16 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
             return this.workflowSubjectVersion.MatchesTriggerType(this.matchingTrigger.Type) && this.matchingTrigger.Topics.Any(topic => this.workflowSubjectVersion.MatchesTopic(topic));
         }
 
+        /// <summary>
+        /// A benchmark to determine performance of applying a matching trigger type.
+        /// </summary>
+        /// <returns><see langword="true"/> if the subject is a match.</returns>
+        [Benchmark]
+        public bool ApplyTriggerMatchingTypeButNotTopics()
+        {
+            return this.workflowSubjectVersion.MatchesTriggerType(this.matchingTypeButNotTopicsTrigger.Type) && this.matchingTypeButNotTopicsTrigger.Topics.Any(topic => this.workflowSubjectVersion.MatchesTopic(topic));
+        }
+
         private static WorkflowSubjectVersion BuildWorkflowSubjectVersion(Workflow workflow, string startStateId)
         {
             if (!workflow.TryGetState(startStateId, out State? startState))
@@ -68,7 +80,7 @@ namespace Corvus.ReaqtiveWorkflow.Benchmarks
                 1,
                 startStateId,
                 startState.TriggerTypes,
-                Enumerable.Empty<string>(),
+                new[] { "Foo", "Bar", "Baz", "There" },
                 WorkflowSubjectStatus.WaitingForTrigger,
                 0,
                 new ());
