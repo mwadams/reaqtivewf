@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31321.278
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.ReaqtiveWorkflow", "Corvus.ReaqtiveWorkflow\Corvus.ReaqtiveWorkflow.csproj", "{E72CE1D6-0637-40AF-AE18-1834F99ABF99}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.ReaqtiveWorkflow.Benchmarks", "..\Corvus.ReaqtiveWorkflow.Benchmarks\Corvus.ReaqtiveWorkflow.Benchmarks.csproj", "{870C42BD-82DB-4557-B10A-CFF1E5DD3267}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{E72CE1D6-0637-40AF-AE18-1834F99ABF99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E72CE1D6-0637-40AF-AE18-1834F99ABF99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E72CE1D6-0637-40AF-AE18-1834F99ABF99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{870C42BD-82DB-4557-B10A-CFF1E5DD3267}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{870C42BD-82DB-4557-B10A-CFF1E5DD3267}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{870C42BD-82DB-4557-B10A-CFF1E5DD3267}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{870C42BD-82DB-4557-B10A-CFF1E5DD3267}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
