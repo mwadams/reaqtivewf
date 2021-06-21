@@ -105,6 +105,14 @@ namespace Corvus.Workflows
     ///         RecoveryMessage      └─────────┘
     /// ]]>
     /// </code>
+    /// <para>
+    /// If a subject is <see cref="WorkflowSubjectStatus.Faulted"/> then it can be recovered by creating a <see cref="WorkflowSubjectRecoveryInstance"/> message.
+    /// The instance constains a <see cref="WorkflowSubjectRecoveryInstance.Version"/> which is produced for the subject with the matching <see cref="WorkflowSubjectVersion.Id"/>
+    /// if it has a later <see cref="WorkflowSubjectVersion.SequenceNumber"/> and the current subject version is in the status <see cref="WorkflowSubjectStatus.Faulted"/>. Otherwise
+    /// it is ignored. This allows you to programatically recover from a faulted state, with idempotency. Note that the "recovery" instance does not have to be in the
+    /// <see cref="WorkflowSubjectStatus.WaitingForTrigger"/> - you could have started commands and be waiting for acks, or you ccould even leave it in the faulted state
+    /// for a multi-stage recovery process.
+    /// </para>
     /// </remarks>
     public sealed class Workflow
     {
